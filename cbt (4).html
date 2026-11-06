@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목공예기능사 필기 CBT 모의고사 시스템</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            user-select: none;
+        }
+        /* Custom Scrollbar for OMR and Questions */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- App Container -->
+    <div id="app" class="h-full flex flex-col justify-between">
+        <!-- Main Content Render Area -->
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // -------------------------------------------------------------
+        // 1. EXTENDED QUESTION POOL & GENERATOR (대규모 문제 풀 및 생성)
+        // -------------------------------------------------------------
+        const baseQuestionPool = [
+            // 과목 1: 목재 재료학 및 공구
+            { subject: "목재 재료학 및 공구", q: "목재의 함수율을 구하는 공식으로 올바른 것은? (W1: 건조 전 중량, W0: 전건 중량)", opts: ["[(W1 - W0) / W0] × 100", "[(W0 - W1) / W1] × 100", "[(W1 + W0) / W0] × 100", "[(W1 - W0) / W1] × 100"], ans: 1, exp: "함수율(%) = [(건조 전 중량 - 전건 중량) / 전건 중량] × 100 입니다." },
+            { subject: "목재 재료학 및 공구", q: "목재의 수축률이 가장 큰 방향부터 작은 방향으로 올바르게 나열된 것은?", opts: ["접선 방향 > 반경 방향 > 섬유 방향", "섬유 방향 > 반경 방향 > 접선 방향", "반경 방향 > 접선 방향 > 섬유 방향", "접선 방향 > 섬유 방향 > 반경 방향"], ans: 1, exp: "수축 변형률은 접선(수피)방향 > 반경(나이테)방향 > 섬유(길이)방향 순입니다." },
+            { subject: "목재 재료학 및 공구", q: "다음 중 활엽수(하드우드)에 해당하며 고급 가구 및 공예재로 많이 쓰이는 수종은?", opts: ["호두나무(Walnut)", "소나무(Pine)", "삼나무(Cedar)", "전나무(Fir)"], ans: 1, exp: "월넛(호두나무), 참나무, 느티나무 등은 대표적인 활엽수(하드우드)입니다." },
+            { subject: "목재 재료학 및 공구", q: "목재 건조의 주요 목적으로 옳지 않은 것은?", opts: ["목재 부피의 무한 확장", "목재의 수축 팽창 변형 예방", "부패균 및 병충해 방지", "운반 중량 감소 및 강도 증가"], ans: 1, exp: "목재 건조는 변형 예방, 썩음 방지, 강도 향상, 운반성 향상이 목적입니다." },
+            { subject: "목재 재료학 및 공구", q: "목재의 변재와 심재에 관한 설명으로 옳은 것은?", opts: ["심재는 나이테 안쪽 죽은 세포층으로 내구성이 높고 색이 진하다", "변재가 심재보다 썩지 않으며 벌레 피해에 강하다", "변재는 수분 함량이 심재보다 훨씬 낮다", "심재는 나무 껍질 바로 밑 부분이다"], ans: 1, exp: "심재는 수지가 축적되어 어두운 색을 띠고 내구성 및 방충성이 뛰어납니다." },
+            { subject: "목재 재료학 및 공구", q: "목재 건조 결함 중 겉은 마르고 속은 마르지 않아 잔류 응력이 생기는 현상은?", opts: ["겉마름(Case Hardening)", "꿀벌집 쪼개짐(Honeycomb)", "비틀림(Twist)", "표면 잔금"], ans: 1, exp: "겉마름은 표면 수분이 급격히 먼저 증발하여 발생하는 건조 결함입니다." },
+            { subject: "목재 재료학 및 공구", q: "손대패 바닥의 평면 상태를 점검하기 위해 2개를 올려놓고 측정하는 도구는?", opts: ["하대기(평면기)", "버니어 캘리퍼스", "피치 게이지", "다이얼 게이지"], ans: 1, exp: "대패 바닥의 평면도 점검에는 2개의 하대기(평판게이지)를 사용합니다." },
+            { subject: "목재 재료학 및 공구", q: "합성 판재 중 목재 섬유(Fiber)를 고온 고압으로 바이오 접착제와 섞어 성형한 판재는?", opts: ["MDF(중밀도 섬유판)", "합판(Plywood)", "파티클보드(PB)", "집성목"], ans: 1, exp: "MDF는 목재 섬유(파이버)를 압축 성형하여 입자가 매우 고른 판재입니다." },
+            { subject: "목재 재료학 및 공구", q: "목재의 비중(Specific Gravity)이 클 때 나타나는 일반적 특징은?", opts: ["휨 강도와 압축 강도가 크다", "목재가 매우 가벼워진다", "수축 팽창 변형량이 매우 적다", "건조 속도가 현저히 빨라진다"], ans: 1, exp: "비중이 큰 목재일수록 강도가 높고 수축 및 팽창 변형량도 더 큽니다." },
+            { subject: "목재 재료학 및 공구", q: "샌딩 사포(Sandpaper) 번호(#)에 대한 설명으로 바른 것은?", opts: ["숫자가 클수록 입자가 고와 마감용에 적합하다", "#80이 #400보다 입자가 고르다", "사포질은 고운 번호에서 거친 번호 순으로 한다", "사포질은 나뭇결 직각 방향으로 강하게 연삭한다"], ans: 1, exp: "사포 번호(#)는 숫자가 클수록 입자가 가늘고 고운 연마지입니다." },
+            { subject: "목재 재료학 및 공구", q: "테이블 톱 켜기(섬유 방향 절단) 시 목재가 튀어 오르는 반동(Kickback)을 막는 안전 장치는?", opts: ["쪼개짐 방지 날(Riving Knife)", "벨트 샌더", "스핀들 락", "루터 가이드"], ans: 1, exp: "분할날(Riving knife)은 목재 절단 부위가 좁아지며 톱날을 찝는 반동을 방지합니다." },
+            { subject: "목재 재료학 및 공구", q: "목재의 생나무가 마를 때 소멸하는 수분의 순서는?", opts: ["자유수가 먼저 증발한 후 결합수가 빠져나간다", "결합수가 먼저 증발한 후 자유수가 빠져나간다", "자유수와 결합수가 동시에 소멸한다", "결합수만 증발하고 자유수는 남는다"], ans: 1, exp: "목재 건조 시 세포 간극의 자유수가 먼저 빠져나가고 섬유포화점 이하에서 결합수가 빠져나갑니다." },
+
+            // 과목 2: 목공예 및 가구 제작 작업
+            { subject: "목공예 작업", q: "서랍 앞판과 옆판 결합처럼 당기는 인장력이 많이 작용하는 모서리에 쓰는 장부는?", opts: ["주먹장 맞춤(Dovetail Joint)", "연귀 맞춤", "맞대기 맞춤", "민장부 맞춤"], ans: 1, exp: "주먹장(도브테일) 맞춤은 부채꼴 쐐기 구조로 인장 결합력이 매우 뛰어납니다." },
+            { subject: "목공예 작업", q: "90도 모서리에서 나무 나이테 결을 감추기 위해 45도로 절단하여 결합하는 맞춤은?", opts: ["연귀 맞춤(Miter Joint)", "장부 맞춤", "반턱 맞춤", "촉 맞춤"], ans: 1, exp: "연귀 맞춤은 45도 각도로 맞물려 모서리 외관을 깔끔하게 마감합니다." },
+            { subject: "목공예 작업", q: "암장부(Mortise) 구멍을 사각형 형태로 정밀하게 파내는 목공 기계는?", opts: ["각장부기(Mortiser)", "띠톱기계(Band Saw)", "두께 대패기", "만능 목공기"], ans: 1, exp: "각장부기는 드릴과 사각 칼날이 통합되어 사각 암장부 구멍을 만듭니다." },
+            { subject: "목공예 작업", q: "목공예 및 가구 도장 시 락 깍지벌레 분비물을 알코올에 녹여 만드는 천연 도료는?", opts: ["셀락(Shellac)", "카슈 도료", "우레탄 니스", "에나멜 칠"], ans: 1, exp: "셀락은 천연 곤충 분비물을 알코올에 녹여 사용하는 투명 친환경 도료입니다." },
+            { subject: "목공예 작업", q: "전동 루터(Router) 작업 시 부재 모서리를 따라 굴러가며 깊이를 유지하는 비트 부품은?", opts: ["가이드 베어링", "콜렛 척", "스핀들 락", "조임 렌치"], ans: 1, exp: "가이드 베어링은 비트 하단에서 목재 단면을 타며 일정한 모따기를 돕습니다." },
+            { subject: "목공예 작업", q: "목선반(Wood Lathe) 회전 기계 작업 시 가장 중요한 안전 수칙은?", opts: ["작업 중 장갑 착용을 금지하고 소매를 단정히 한다", "손 보호를 위해 두꺼운 면장갑을 착용한다", "작업 중 칼받이 위치를 실시간 조정한다", "회전 속도를 항상 최고속으로 가동한다"], ans: 1, exp: "회전 기계 작업 시 장갑 착용은 말려 들어갈 위험이 있어 엄격히 금지됩니다." },
+            { subject: "목공예 작업", q: "목재 표면에 가열된 펜이나 불도장으로 도안을 태워 그리는 공예 기법은?", opts: ["우드버닝(Woodburning)", "상감 기법", "칠보 공예", "캐스팅"], ans: 1, exp: "우드버닝(낙화)은 열을 이용해 목재 표면에 그림이나 문양을 태워 장식합니다." },
+            { subject: "목공예 작업", q: "목재 조각 시 오목한 곡면 홈이나 보울(Bowl) 내부를 파내는 데 쓰는 조각 칼은?", opts: ["둥근칼(Gouge)", "평칼", "창칼", "삼각칼"], ans: 1, exp: "둥근칼(아사도)은 곡면 홈을 파내는 데 최적화된 조각칼입니다." },
+            { subject: "목공예 작업", q: "목재 클램핑 작업 시 과도한 압력으로 접착제가 밀려나 접착력이 떨어지는 결함은?", opts: ["Starved Joint", "수축 결함", "무늬목 뒤틀림", "도막 백화"], ans: 1, exp: "과도한 좜은 접착제층을 밖으로 모두 밀어내어 Starved Joint 결함을 일으킵니다." },
+            { subject: "목공예 작업", q: "전통 옻칠 도장 시 옻 수액의 핵심 유성 화학 성분은?", opts: ["우루시올(Urushiol)", "포름알데히드", "톨루엔", "아세톤"], ans: 1, exp: "옻칠의 고유 도막을 형성하는 유용한 천연 성분은 우루시올입니다." },
+            { subject: "목공예 작업", q: "목재 조립 시 나사못을 직결할 때 나무 쪼개짐을 방지하기 위해 먼저 뚫는 구멍은?", opts: ["유도 구멍(Pilot Hole)", "암장부 구멍", "반턱 구멍", "배수 구멍"], ans: 1, exp: "유도 구멍(파일럿 홀)을 예비로 뚫어주어야 나사못으로 인한 쪼개짐을 막습니다." },
+            { subject: "목공예 작업", q: "목재 숫장부 끝에 쐐기(Wedge)를 박아 조립하는 주된 이유는?", opts: ["장부 끝을 벌려 암장부 안에서 결합력이 이탈되지 않게 하기 위함", "무겁게 만들기 위함", "칠을 잘 받게 하기 위함", "나무 색을 바꾸기 위함"], ans: 1, exp: "숫장부에 쐐기를 박으면 암장부 내부에서 장부 끝이 벌어지며 이탈이 방지됩니다." },
+
+            // 과목 3: 목공예 디자인 및 작업계획
+            { subject: "목공예 디자인 및 작업계획", q: "도면 작성 시 물체의 보이지 않는 내부 구조나 은폐된 부분을 표시하는 선은?", opts: ["파선(은선)", "굵은 실선", "1점 쇄선", "2점 쇄선"], ans: 1, exp: "보이지 않는 모서리나 구조는 점선 형태의 파선(은선)으로 표기합니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "KS 제도 규격에서 도면에 치수를 기입할 때 단위 표시가 없으면 기준 단위는?", opts: ["mm", "cm", "m", "inch"], ans: 1, exp: "한국산업표준 제도 통칙상 도면 단위는 mm가 기본입니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "가구 조형 디자인의 황금 비율(Golden Ratio) 수치 비율은?", opts: ["1 : 1.618", "1 : 1.414", "1 : 1.732", "1 : 2.000"], ans: 1, exp: "황금 비율은 1 : 1.618 로 시각적 균형미가 뛰어납니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "제3각법 도면 배치에서 정면도(Front view) 바로 위에 위치하는 도면은?", opts: ["평면도", "저면도", "우측면도", "배면도"], ans: 1, exp: "제3각법에서 정면도 위쪽에는 위에서 본 평면도가 배치됩니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "인간공학적(Ergonomics) 가구 설계 시 최우선 고려 사항은?", opts: ["사용자 인체 치수 및 동작 편의성", "목재 원목 판재 시판 크기", "운반 차량 크기", "도료 용량"], ans: 1, exp: "인간공학 디자인은 사용자의 신체 구조와 편의성을 최우선 고려합니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "19세기 말 기계화 생산 반발과 수공예 장인정신 회복을 주창한 운동은?", opts: ["미술공예운동(Arts & Crafts)", "아르데코", "팝아트", "구성주의"], ans: 1, exp: "윌리엄 모리스가 이끈 미술공예운동은 수공예 정교함의 회복을 주창했습니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "도면 표시 기호 중 지름(Diameter)을 나타내는 기호는?", opts: ["Ø (또는 DIA)", "R", "□", "t"], ans: 1, exp: "지름은 Ø, 반지름은 R, 두께는 t 로 나타냅니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "실제 가구 제작 전 형태감과 결함을 검증하기 위해 만드는 시제품 모형은?", opts: ["목업(Mock-up)", "렌더링", "스케치", "투시도"], ans: 1, exp: "목업(Mock-up)은 최종 실물 제작 전 구조와 디자인을 점검하는 평가 모형입니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "1개의 소멸점(Vanishing Point)을 가지며 전면이 투화면과 평행한 투시도법은?", opts: ["1점 투시도", "2점 투시도", "3점 투시도", "등길이 투시도"], ans: 1, exp: "1점 투시도는 소멸점이 1개인 투시 방식으로 실내 및 전면 표현에 좋습니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "도면에서 물체의 중심선이나 축선을 표시하는 선은?", opts: ["1점 쇄선", "굵은 실선", "파선", "파형선"], ans: 1, exp: "중심선 및 축선은 1점 쇄선을 사용합니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "색의 3속성에 해당하지 않는 것은?", opts: ["조도(Illuminance)", "색상(Hue)", "명도(Value)", "채도(Chroma)"], ans: 1, exp: "색의 3속성은 색상, 명도, 채도입니다." },
+            { subject: "목공예 디자인 및 작업계획", q: "조형 요소 중 위치만 가지고 있고 크기나 넓이가 없는 최소 단위는?", opts: ["점(Point)", "선(Line)", "면(Plane)", "체적"], ans: 1, exp: "점은 위치만을 가진 조형의 기본 단위입니다." }
+        ];
+
+        // -------------------------------------------------------------
+        // 2. SMART RANDOM QUESTION & NON-CONSECUTIVE ANSWER GENERATOR
+        // -------------------------------------------------------------
+        function generateFreshExamQuestions() {
+            const subjects = [
+                "목재 재료학 및 공구",
+                "목공예 작업",
+                "목공예 디자인 및 작업계획"
+            ];
+            
+            let generatedList = [];
+            let globalId = 1;
+
+            subjects.forEach(subj => {
+                const subPool = baseQuestionPool.filter(q => q.subject.includes(subj) || subj.includes(q.subject));
+                const poolShuffled = shuffleArray(subPool);
+
+                for (let i = 0; i < 20; i++) {
+                    const rawQ = poolShuffled[i % poolShuffled.length];
+                    generatedList.push({
+                        id: globalId++,
+                        subject: subj,
+                        question: rawQ.q,
+                        rawOpts: [...rawQ.opts],
+                        explanation: rawQ.exp
+                    });
+                }
+            });
+
+            generatedList = shuffleArray(generatedList);
+            generatedList.forEach((q, idx) => q.id = idx + 1);
+
+            const finalQuestions = [];
+            let lastAnswer = -1;
+            let consecutiveCount = 0;
+
+            generatedList.forEach((item) => {
+                let options = [...item.rawOpts];
+                let correctOptText = options[0];
+
+                options = shuffleArray(options);
+                let correctIndex = options.indexOf(correctOptText) + 1;
+
+                if (correctIndex === lastAnswer) {
+                    consecutiveCount++;
+                    if (consecutiveCount >= 2) {
+                        while (correctIndex === lastAnswer) {
+                            options = shuffleArray(options);
+                            correctIndex = options.indexOf(correctOptText) + 1;
+                        }
+                        consecutiveCount = 1;
+                    }
+                } else {
+                    lastAnswer = correctIndex;
+                    consecutiveCount = 1;
+                }
+
+                const formattedOptions = options.map((optText, oIdx) => `${oIdx + 1}. ${optText}`);
+
+                finalQuestions.push({
+                    id: item.id,
+                    subject: item.subject,
+                    question: item.question,
+                    options: formattedOptions,
+                    answer: correctIndex,
+                    explanation: item.explanation
+                });
+            });
+
+            return finalQuestions;
+        }
+
+        // -------------------------------------------------------------
+        // 3. STATE MANAGEMENT & EVENT CONTROLLER
+        // -------------------------------------------------------------
+        const state = {
+            mode: 'welcome',
+            questions: [],
+            userAnswers: [],
+            currentIndex: 0,
+            examSubmitted: false,
+            timeLeft: 3600,
+            timerId: null,
+            score: 0,
+            passStatus: false,
+            subjectScores: {},
+            filterIncorrectOnly: false,
+            isMobile: false,
+            showMobileOmr: false,
+            showTutorial: true,
+            tutorialStep: 1
+        };
+
+        function detectDevice() {
+            state.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        }
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function init() {
+            detectDevice();
+            window.addEventListener('resize', () => {
+                const prevMobile = state.isMobile;
+                detectDevice();
+                if (prevMobile !== state.isMobile) render();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Control' && (state.mode === 'exam' || state.mode === 'practice')) {
+                    e.preventDefault();
+                    if (state.currentIndex < state.questions.length - 1) {
+                        goToQuestion(state.currentIndex + 1);
+                    } else if (state.currentIndex === state.questions.length - 1) {
+                        confirmSubmitModal();
+                    }
+                }
+            });
+
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (state.mode !== 'exam' && state.mode !== 'practice') return;
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+
+            render();
+        }
+
+        function openTutorial() {
+            state.showTutorial = true;
+            state.tutorialStep = 1;
+            render();
+        }
+
+        function closeTutorial() {
+            state.showTutorial = false;
+            render();
+        }
+
+        function nextTutorialStep() {
+            if (state.tutorialStep < 3) {
+                state.tutorialStep++;
+                render();
+            } else {
+                closeTutorial();
+            }
+        }
+
+        function prevTutorialStep() {
+            if (state.tutorialStep > 1) {
+                state.tutorialStep--;
+                render();
+            }
+        }
+
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+            if (Math.abs(swipeDistance) > 60) {
+                if (swipeDistance < 0 && state.currentIndex < state.questions.length - 1) {
+                    goToQuestion(state.currentIndex + 1);
+                } else if (swipeDistance > 0 && state.currentIndex > 0) {
+                    goToQuestion(state.currentIndex - 1);
+                }
+            }
+        }
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startTest(modeType) {
+            state.mode = modeType;
+            state.questions = generateFreshExamQuestions();
+            state.userAnswers = new Array(state.questions.length).fill(null);
+            state.currentIndex = 0;
+            state.examSubmitted = false;
+            state.timeLeft = 3600;
+
+            if (modeType === 'exam') {
+                startTimer();
+            } else if (state.timerId) {
+                clearInterval(state.timerId);
+            }
+            render();
+        }
+
+        function startTimer() {
+            if (state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                if (state.timeLeft > 0) {
+                    state.timeLeft--;
+                    updateTimerUI();
+                } else {
+                    clearInterval(state.timerId);
+                    alert("시험 시간이 종료되었습니다! 답안이 자동 제출됩니다.");
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const timerEl = document.getElementById('timer-display');
+            if (timerEl) {
+                const minutes = Math.floor(state.timeLeft / 60);
+                const seconds = state.timeLeft % 60;
+                timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                if (state.timeLeft <= 300) {
+                    timerEl.classList.add('text-red-600', 'animate-pulse');
+                }
+            }
+        }
+
+        function selectAnswer(qIdx, optionIdx) {
+            if (state.mode === 'exam' && state.examSubmitted) return;
+            state.userAnswers[qIdx] = optionIdx + 1;
+            render();
+        }
+
+        function goToQuestion(idx) {
+            if (idx >= 0 && idx < state.questions.length) {
+                state.currentIndex = idx;
+                render();
+            }
+        }
+
+        function confirmSubmitModal() {
+            const unAnsweredCount = state.userAnswers.filter(a => a === null).length;
+            const modalHtml = `
+                <div id="modal-bg" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 transform transition-all border border-slate-200">
+                        <div class="flex items-center gap-3 text-amber-600">
+                            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+                            <h3 class="text-xl font-bold text-slate-800">시험 답안 제출</h3>
+                        </div>
+                        <p class="text-slate-600">
+                            정말로 시험을 종료하고 답안을 제출하시겠습니까?
+                        </p>
+                        ${unAnsweredCount > 0 
+                            ? `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm font-medium">
+                                ⚠️ 아직 풀지 않은 문제가 <strong>${unAnsweredCount}개</strong> 있습니다.
+                               </div>`
+                            : `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-emerald-800 text-sm font-medium">
+                                 모든 60문제를 작성 완료했습니다!
+                               </div>`
+                        }
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="closeModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">취소(계속 풀기)</button>
+                            <button onclick="submitExam()" class="px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition">제출 및 채점</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-bg');
+            if (modal) modal.remove();
+        }
+
+        function submitExam() {
+            closeModal();
+            if (state.timerId) clearInterval(state.timerId);
+            
+            let correctCount = 0;
+            const subjectCorrect = {
+                "목공예 재료 및 공구": 0,
+                "목공예 작업": 0,
+                "목공예 디자인 및 작업계획": 0
+            };
+            const subjectTotal = {
+                "목공예 재료 및 공구": 20,
+                "목공예 작업": 20,
+                "목공예 디자인 및 작업계획": 20
+            };
+
+            state.questions.forEach((q, idx) => {
+                if (state.userAnswers[idx] === q.answer) {
+                    correctCount++;
+                    subjectCorrect[q.subject] = (subjectCorrect[q.subject] || 0) + 1;
+                }
+            });
+
+            state.score = Math.round((correctCount / 60) * 100);
+            state.passStatus = state.score >= 60;
+            state.subjectScores = {
+                correctCount,
+                subjectCorrect,
+                subjectTotal
+            };
+
+            state.mode = 'result';
+            render();
+        }
+
+        // -------------------------------------------------------------
+        // 4. UI RENDERERS
+        // -------------------------------------------------------------
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+
+            if (state.mode === 'welcome') {
+                app.innerHTML = renderWelcomeScreen();
+            } else if (state.mode === 'exam' || state.mode === 'practice') {
+                app.innerHTML = renderCBTInterface();
+            } else if (state.mode === 'result') {
+                app.innerHTML = renderResultScreen();
+            } else if (state.mode === 'review') {
+                app.innerHTML = renderReviewScreen();
+            }
+
+            if (state.showTutorial) {
+                app.insertAdjacentHTML('beforeend', renderTutorialModal());
+            }
+
+            lucide.createIcons();
+        }
+
+        function renderTutorialModal() {
+            const step = state.tutorialStep;
+            return `
+                <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 border border-slate-200">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2 text-blue-600">
+                                <i data-lucide="help-circle" class="w-6 h-6"></i>
+                                <h3 class="text-lg font-bold text-slate-800">CBT 모의고사 이용 안내 (${step}/3)</h3>
+                            </div>
+                            <button onclick="closeTutorial()" class="text-slate-400 hover:text-slate-600 p-1">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        ${step === 1 ? `
+                            <div class="space-y-3">
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-4">
+                                    <i data-lucide="monitor" class="w-10 h-10 text-blue-600 shrink-0"></i>
+                                    <div>
+                                        <h4 class="font-bold text-blue-950 text-sm">실제 CBT 시험장 환경과 동일!</h4>
+                                        <p class="text-xs text-blue-800 mt-1 leading-relaxed">
+                                            좌측 문제 영역과 우측 OMR 답안지가 실시간 연동되어 미풀이 문제를 한눈에 파악할 수 있습니다.
+                                        </p>
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-600 space-y-2 pl-1">
+                                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> <strong>실전 모드:</strong> 60분 시간제한 및 채점 리포트 제공</li>
+                                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> <strong>연습 모드:</strong> 풀어보며 즉시 정답 및 해설 확인 가능</li>
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${step === 2 ? `
+                            <div class="space-y-3">
+                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4">
+                                    <i data-lucide="zap" class="w-10 h-10 text-amber-600 shrink-0"></i>
+                                    <div>
+                                        <h4 class="font-bold text-amber-950 text-sm">편리한 조작 및 빠른 문제 넘김</h4>
+                                        <p class="text-xs text-amber-900 mt-1 leading-relaxed">
+                                            PC와 핸드폰 기기를 자동 감지하여 가장 빠른 응시 환경을 제공합니다.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs">
+                                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div class="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                                            <i data-lucide="keyboard" class="w-4 h-4 text-blue-600"></i> 컴퓨터(PC) 사용 시
+                                        </div>
+                                        <p class="text-slate-600">키보드의 <span class="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-mono font-bold">Ctrl</span> 키를 누르면 다음 문제로 바로 넘어갑니다.</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div class="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                                            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-600"></i> 핸드폰(모바일) 사용 시
+                                        </div>
+                                        <p class="text-slate-600">화면을 좌우로 <span class="font-bold text-emerald-700">쓱 밀어(스와이프)</span> 편리하게 이동합니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${step === 3 ? `
+                            <div class="space-y-3">
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-4">
+                                    <i data-lucide="file-spread-sheet" class="w-10 h-10 text-emerald-600 shrink-0"></i>
+                                    <div>
+                                        <h4 class="font-bold text-emerald-950 text-sm">성적 리포트 & 파일 저장 기능</h4>
+                                        <p class="text-xs text-emerald-800 mt-1 leading-relaxed">
+                                            시험 종료 후 60문항 전체 제출 답안 및 해설을 텍스트 파일(.txt)로 소장할 수 있습니다.
+                                        </p>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200 leading-relaxed">
+                                    💡 <strong>시험 볼 때마다 무작위 문제 생성:</strong> 시험을 시작할 때마다 새로 조합된 문항들과 연속 정답 방지 시스템이 작동합니다.
+                                </p>
+                            </div>
+                        ` : ''}
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <div class="flex gap-1">
+                                <span class="w-2.5 h-2.5 rounded-full ${step === 1 ? 'bg-blue-600' : 'bg-slate-200'}"></span>
+                                <span class="w-2.5 h-2.5 rounded-full ${step === 2 ? 'bg-blue-600' : 'bg-slate-200'}"></span>
+                                <span class="w-2.5 h-2.5 rounded-full ${step === 3 ? 'bg-blue-600' : 'bg-slate-200'}"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                ${step > 1 ? `
+                                    <button onclick="prevTutorialStep()" class="px-3.5 py-1.5 text-xs font-semibold text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">이전</button>
+                                ` : ''}
+                                <button onclick="nextTutorialStep()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow transition">
+                                    ${step === 3 ? '시작하기' : '다음'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderWelcomeScreen() {
+            return `
+                <div class="h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white p-6 relative">
+                    <button onclick="openTutorial()" class="absolute top-4 right-4 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-400 flex items-center gap-1.5 backdrop-blur shadow-md transition">
+                        <i data-lucide="help-circle" class="w-4 h-4"></i> 사용 방법 안내
+                    </button>
+
+                    <div class="max-w-3xl w-full bg-slate-800/80 backdrop-blur-md rounded-2xl p-8 border border-slate-700/60 shadow-2xl text-center space-y-8">
+                        
+                        <div class="space-y-3">
+                            <span class="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                한국산업인력공단 Q-Net 출제기준 반영
+                            </span>
+                            <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                                목공예기능사 필기 CBT 모의고사
+                            </h1>
+                            <p class="text-slate-400 text-sm sm:text-base">
+                                2025~2026년 최신 시험 출제경향을 반영한 60문항 완전 수록
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                            <div class="bg-slate-700/50 border border-slate-600/50 p-4 rounded-xl flex items-start gap-3">
+                                <i data-lucide="clock" class="w-6 h-6 text-amber-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-200 text-sm">시험 시간</h4>
+                                    <p class="text-slate-400 text-xs mt-1">총 60분 (1문항당 1분 권장)</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-700/50 border border-slate-600/50 p-4 rounded-xl flex items-start gap-3">
+                                <i data-lucide="file-text" class="w-6 h-6 text-blue-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-200 text-sm">문항 수 및 합격선</h4>
+                                    <p class="text-slate-400 text-xs mt-1">60문항 / 60점 이상 합격 (36개 이상)</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-700/50 border border-slate-600/50 p-4 rounded-xl flex items-start gap-3">
+                                <i data-lucide="layers" class="w-6 h-6 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-200 text-sm">시험 과목</h4>
+                                    <p class="text-slate-400 text-xs mt-1">재료 및 공구, 작업, 디자인계획</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+                            <button onclick="startTest('exam')" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                <i data-lucide="play-circle" class="w-6 h-6"></i>
+                                실전 모의고사 시작 (60분 타이머)
+                            </button>
+                            <button onclick="startTest('practice')" class="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold text-lg rounded-xl border border-slate-600 shadow-md transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                <i data-lucide="book-open" class="w-6 h-6 text-amber-400"></i>
+                                연습 모드 (즉시 정답/해설 확인)
+                            </button>
+                        </div>
+
+                        <div class="text-slate-500 text-xs pt-2">
+                            ※ 실제 국가기술자격 시험장의 CBT 콘솔과 동일한 OMR 내비게이션 환경을 제공합니다.<br/>
+                            <span class="text-amber-400 font-medium">💡 팁: 시험 도중 [Ctrl] 키를 누르면 다음 문제로 즉시 이동합니다.</span>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCBTInterface() {
+            const q = state.questions[state.currentIndex];
+            const answeredCount = state.userAnswers.filter(a => a !== null).length;
+            const isPractice = state.mode === 'practice';
+
+            return `
+                <header class="bg-slate-900 text-white px-3 sm:px-4 py-2.5 flex items-center justify-between border-b border-slate-700 shrink-0">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <span class="bg-amber-600 font-extrabold text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 rounded tracking-wider">CBT</span>
+                        <div class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-300">
+                            <i data-lucide="${state.isMobile ? 'smartphone' : 'monitor'}" class="w-3.5 h-3.5 text-blue-400"></i>
+                            <span class="hidden xs:inline">${state.isMobile ? '모바일' : 'PC 접속'}</span>
+                        </div>
+                        <span class="text-xs bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-amber-400 hidden md:inline-block">
+                            ${isPractice ? '연습 모드' : '실전 모의고사'}
+                        </span>
+                    </div>
+
+                    ${!isPractice ? `
+                        <div class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span id="timer-display" class="font-mono text-sm sm:text-base font-bold text-emerald-400">
+                                ${Math.floor(state.timeLeft / 60).toString().padStart(2, '0')}:${(state.timeLeft % 60).toString().padStart(2, '0')}
+                            </span>
+                        </div>
+                    ` : `
+                        <div class="text-xs text-slate-400 hidden sm:block">즉시 정답 확인</div>
+                    `}
+
+                    <div class="flex items-center gap-2">
+                        ${state.isMobile ? `
+                            <button onclick="state.showMobileOmr = !state.showMobileOmr; render();" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                <i data-lucide="grid" class="w-3.5 h-3.5 text-amber-400"></i> OMR
+                            </button>
+                        ` : ''}
+                        <button onclick="confirmSubmitModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3 py-1.5 rounded transition flex items-center gap-1 shadow">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                            <span class="hidden xs:inline">제출</span>
+                        </button>
+                    </div>
+                </header>
+
+                <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-200 relative">
+
+                    <section class="flex-1 flex flex-col justify-between overflow-y-auto p-4 sm:p-6 bg-white border-r border-slate-300">
+                        <div class="space-y-4 sm:space-y-5 max-w-4xl">
+                            
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-md">
+                                        문제 ${q.id} / 60
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded truncate max-w-[180px] sm:max-w-none">
+                                        [${q.subject}]
+                                    </span>
+                                </div>
+                                <span class="text-xs text-slate-400">배점: 1.66점</span>
+                            </div>
+
+                            <div class="text-slate-800 font-semibold text-base sm:text-lg leading-relaxed">
+                                <span class="text-blue-600 font-bold mr-1">${q.id}.</span> ${q.question}
+                            </div>
+
+                            <div class="space-y-2.5 sm:space-y-3 pt-2">
+                                ${q.options.map((opt, optIdx) => {
+                                    const isSelected = state.userAnswers[state.currentIndex] === optIdx + 1;
+                                    const isCorrect = q.answer === optIdx + 1;
+                                    
+                                    let optionStyle = "border-slate-200 hover:bg-slate-50 text-slate-700";
+                                    if (isSelected) {
+                                        optionStyle = "border-blue-600 bg-blue-50 text-blue-900 font-medium ring-1 ring-blue-500";
+                                    }
+
+                                    if (isPractice && isSelected) {
+                                        optionStyle = isCorrect 
+                                            ? "border-emerald-500 bg-emerald-50 text-emerald-900 font-medium ring-2 ring-emerald-500"
+                                            : "border-red-500 bg-red-50 text-red-900 font-medium ring-2 ring-red-500";
+                                    }
+
+                                    return `
+                                        <button onclick="selectAnswer(${state.currentIndex}, ${optIdx})" 
+                                            class="w-full text-left p-3.5 sm:p-4 rounded-xl border text-sm sm:text-base transition flex items-center justify-between active:scale-[0.99] touch-manipulation ${optionStyle}">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-6 h-6 rounded-full border border-current flex items-center justify-center text-xs font-bold shrink-0">
+                                                    ${optIdx + 1}
+                                                </span>
+                                                <span class="leading-snug">${opt}</span>
+                                            </div>
+                                            ${isPractice && isSelected ? (
+                                                isCorrect 
+                                                ? '<i data-lucide="check" class="w-5 h-5 text-emerald-600 shrink-0"></i>' 
+                                                : '<i data-lucide="x" class="w-5 h-5 text-red-600 shrink-0"></i>'
+                                            ) : ''}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            ${isPractice && state.userAnswers[state.currentIndex] !== null ? `
+                                <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm space-y-1">
+                                    <div class="font-bold flex items-center gap-1.5 text-amber-800">
+                                        <i data-lucide="lightbulb" class="w-4 h-4"></i> 정답: ${q.answer}번 해설
+                                    </div>
+                                    <p class="text-slate-700 leading-relaxed">${q.explanation}</p>
+                                </div>
+                            ` : ''}
+
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200">
+                            <button onclick="goToQuestion(${state.currentIndex - 1})" 
+                                ${state.currentIndex === 0 ? 'disabled class="opacity-40 cursor-not-allowed border-slate-200 text-slate-400 bg-slate-100 px-3.5 py-2 rounded-lg text-sm font-semibold flex items-center gap-1"' : 'class="border border-slate-300 hover:bg-slate-100 text-slate-700 px-3.5 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1"'}>
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i> <span class="hidden xs:inline">이전</span>
+                            </button>
+                            
+                            <span class="text-xs text-slate-500 font-medium flex items-center gap-2">
+                                <span><strong class="text-blue-600">${answeredCount}</strong> / 60</span>
+                                ${!state.isMobile ? `<span class="bg-slate-100 text-slate-600 border border-slate-300 px-2 py-0.5 rounded text-[11px] font-mono">Ctrl: 다음</span>` : `<span class="text-[10px] text-slate-400">← 스와이프 →</span>`}
+                            </span>
+
+                            <button onclick="goToQuestion(${state.currentIndex + 1})" 
+                                ${state.currentIndex === state.questions.length - 1 ? 'disabled class="opacity-40 cursor-not-allowed border-slate-200 text-slate-400 bg-slate-100 px-3.5 py-2 rounded-lg text-sm font-semibold flex items-center gap-1"' : 'class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow"'}>
+                                <span class="hidden xs:inline">다음</span> <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </section>
+
+                    <aside class="${state.isMobile ? (state.showMobileOmr ? 'fixed inset-x-0 bottom-0 z-40 bg-slate-900 text-slate-200 h-[60vh] rounded-t-2xl shadow-2xl flex flex-col transition-all' : 'hidden') : 'w-80 bg-slate-900 text-slate-200 flex flex-col justify-between shrink-0 border-l border-slate-700'}">
+                        <div class="p-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="grid" class="w-4 h-4 text-amber-400"></i>
+                                <span class="font-bold text-sm text-slate-100">OMR 답안지</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-400">
+                                    미풀이: <span class="text-amber-400 font-bold">${60 - answeredCount}</span>개
+                                </span>
+                                ${state.isMobile ? `
+                                    <button onclick="state.showMobileOmr = false; render();" class="text-slate-400 hover:text-white p-1">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-3 grid grid-cols-5 sm:grid-cols-5 gap-2 content-start text-xs">
+                            ${state.questions.map((item, idx) => {
+                                const isCurrent = state.currentIndex === idx;
+                                const isAnswered = state.userAnswers[idx] !== null;
+                                const ans = state.userAnswers[idx];
+
+                                let btnClass = "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700";
+                                if (isAnswered) btnClass = "bg-blue-600 text-white font-bold border-blue-500";
+                                if (isCurrent) btnClass += " ring-2 ring-amber-400 ring-offset-1 ring-offset-slate-900";
+
+                                return `
+                                    <button onclick="goToQuestion(${idx}); if(state.isMobile) state.showMobileOmr = false;" class="p-2.5 rounded border flex flex-col items-center justify-center transition active:scale-95 ${btnClass}">
+                                        <span class="text-[10px] text-slate-400 font-normal">Q${idx + 1}</span>
+                                        <span class="text-xs">${ans ? `[${ans}]` : '-'}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="p-3 bg-slate-800 border-t border-slate-700 text-xs text-slate-400 flex justify-around">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-blue-600 rounded-sm"></span> 표기
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-slate-800 border border-slate-600 rounded-sm"></span> 미풀이
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 border-2 border-amber-400 rounded-sm"></span> 현재
+                            </div>
+                        </div>
+                    </aside>
+
+                </main>
+            `;
+        }
+
+        function renderResultScreen() {
+            const { correctCount, subjectCorrect, subjectTotal } = state.subjectScores;
+            const pass = state.passStatus;
+
+            return `
+                <div class="h-full overflow-y-auto bg-slate-100 p-4 sm:p-8 flex justify-center">
+                    <div class="max-w-3xl w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto">
+                        
+                        <div class="${pass ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : 'bg-gradient-to-r from-red-600 to-rose-600'} text-white p-6 sm:p-8 text-center space-y-3">
+                            <div class="inline-flex p-3 rounded-full ${pass ? 'bg-emerald-500/30' : 'bg-red-500/30'} mb-1">
+                                <i data-lucide="${pass ? 'award' : 'alert-circle'}" class="w-12 h-12"></i>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold">
+                                ${pass ? '합격을 축하합니다!' : '아쉽지만 불합격입니다.'}
+                            </h2>
+                            <p class="text-sm opacity-90">
+                                ${pass ? '목공예기능사 필기 자격증 기준점수(60점)를 통과하셨습니다.' : '다시 한번 재도상하여 약점을 보완해 보세요.'}
+                            </p>
+                        </div>
+
+                        <div class="p-6 sm:p-8 space-y-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+                                    <span class="text-xs text-slate-500 font-semibold uppercase">최종 점수</span>
+                                    <div class="text-3xl sm:text-4xl font-extrabold ${pass ? 'text-emerald-600' : 'text-red-600'} mt-1">
+                                        ${state.score} <span class="text-base font-medium text-slate-400">/ 100점</span>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+                                    <span class="text-xs text-slate-500 font-semibold uppercase">맞힌 문제 수</span>
+                                    <div class="text-3xl sm:text-4xl font-extrabold text-slate-800 mt-1">
+                                        ${correctCount} <span class="text-base font-medium text-slate-400">/ 60개</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 pt-2">
+                                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                    <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-600"></i> 과목별 득점 성적 리포트
+                                </h3>
+
+                                <div class="space-y-3">
+                                    ${Object.keys(subjectTotal).map(subj => {
+                                        const c = subjectCorrect[subj] || 0;
+                                        const t = subjectTotal[subj];
+                                        const pct = Math.round((c / t) * 100);
+                                        return `
+                                            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-1.5">
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="font-semibold text-slate-700">${subj}</span>
+                                                    <span class="font-mono text-slate-600"><strong>${c}</strong> / ${t}문항 (${pct}점)</span>
+                                                </div>
+                                                <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                                                    <div class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex flex-col sm:flex-row gap-3">
+                                <button onclick="downloadExamReport()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                                    <i data-lucide="download" class="w-5 h-5"></i> 시험 결과 파일 다운로드 (.txt)
+                                </button>
+                                <button onclick="startReviewMode()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                                    <i data-lucide="file-check" class="w-5 h-5"></i> 오답노트 & 해설 보기
+                                </button>
+                                <button onclick="startTest('exam')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2">
+                                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> 다시 시험 보기
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function downloadExamReport() {
+            const now = new Date();
+            const dateStr = now.toLocaleString('ko-KR');
+            
+            let content = `====================================================\n`;
+            content += `        목공예기능사 필기 CBT 시험 결과 보고서        \n`;
+            content += `====================================================\n\n`;
+            content += `■ 응시 일시 : ${dateStr}\n`;
+            content += `■ 응시 모드 : ${state.mode === 'exam' ? '실전 모의고사' : '연습 모드'}\n`;
+            content += `■ 최종 점수 : ${state.score}점 / 100점\n`;
+            content += `■ 판정 결과 : ${state.passStatus ? '합격 (PASS)' : '불합격 (FAIL)'}\n`;
+            content += `■ 맞힌 문항 : ${state.subjectScores.correctCount} / 60문항\n\n`;
+            
+            content += `----------------------------------------------------\n`;
+            content += `                  과목별 상세 성적                   \n`;
+            content += `----------------------------------------------------\n`;
+            Object.keys(state.subjectScores.subjectTotal).forEach(subj => {
+                const c = state.subjectScores.subjectCorrect[subj] || 0;
+                const t = state.subjectScores.subjectTotal[subj];
+                content += `- ${subj}: ${c} / ${t}문항 (${Math.round((c/t)*100)}점)\n`;
+            });
+            content += `\n====================================================\n`;
+            content += `                 60문항 상세 오답 및 풀이             \n`;
+            content += `====================================================\n\n`;
+
+            state.questions.forEach((q, idx) => {
+                const userAns = state.userAnswers[idx];
+                const isCorrect = userAns === q.answer;
+                content += `[문제 ${idx + 1}] (${q.subject}) - ${isCorrect ? 'O 정답' : 'X 오답'}\n`;
+                content += `Q: ${q.question}\n`;
+                q.options.forEach((opt, oIdx) => {
+                    content += `  ${opt}\n`;
+                });
+                content += `* 제출 답안: ${userAns ? userAns + '번' : '미표기'}\n`;
+                content += `* 정답: ${q.answer}번\n`;
+                content += `* 해설: ${q.explanation}\n`;
+                content += `----------------------------------------------------\n\n`;
+            });
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `목공예기능사_CBT_시험결과_${now.toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function startReviewMode() {
+            state.mode = 'review';
+            state.filterIncorrectOnly = false;
+            render();
+        }
+
+        function renderReviewScreen() {
+            let displayedQuestions = state.questions;
+            if (state.filterIncorrectOnly) {
+                displayedQuestions = state.questions.filter((q, idx) => state.userAnswers[idx] !== q.answer);
+            }
+
+            return `
+                <div class="h-full flex flex-col bg-slate-100 overflow-hidden">
+                    <header class="bg-slate-900 text-white p-4 flex items-center justify-between shadow shrink-0">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-base sm:text-lg font-bold">오답노트 및 문제 해설</h2>
+                            <span class="text-xs bg-slate-800 px-2.5 py-1 rounded-full text-slate-300">
+                                점수: ${state.score}점 (${state.passStatus ? '합격' : '불합격'})
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="toggleIncorrectFilter()" class="text-xs sm:text-sm px-3 py-1.5 rounded-lg font-semibold transition ${state.filterIncorrectOnly ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">
+                                ${state.filterIncorrectOnly ? '전체 문제 보기' : '틀린 문제만 보기'}
+                            </button>
+                            <button onclick="state.mode = 'welcome'; render();" class="bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-sm px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                <i data-lucide="home" class="w-4 h-4"></i> 처음으로
+                            </button>
+                        </div>
+                    </header>
+
+                    <main class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full">
+                        ${displayedQuestions.length === 0 ? `
+                            <div class="text-center py-16 text-slate-500 space-y-2">
+                                <i data-lucide="smile" class="w-12 h-12 mx-auto text-emerald-500"></i>
+                                <p class="text-lg font-bold">틀린 문제가 없습니다! 만점입니다.</p>
+                            </div>
+                        ` : ''}
+
+                        ${displayedQuestions.map((q) => {
+                            const originalIdx = q.id - 1;
+                            const userAns = state.userAnswers[originalIdx];
+                            const isCorrect = userAns === q.answer;
+
+                            return `
+                                <div class="bg-white rounded-xl p-5 border ${isCorrect ? 'border-slate-200' : 'border-red-200 ring-1 ring-red-100'} shadow-sm space-y-4">
+                                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-800">문제 ${q.id}</span>
+                                            <span class="text-xs text-slate-500">[${q.subject}]</span>
+                                        </div>
+                                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                                            ${isCorrect ? '정답' : '오답'}
+                                        </span>
+                                    </div>
+
+                                    <div class="text-slate-800 font-medium text-base">
+                                        ${q.question}
+                                    </div>
+
+                                    <div class="space-y-2 pt-1">
+                                        ${q.options.map((opt, oIdx) => {
+                                            const optNum = oIdx + 1;
+                                            const isSelectedByUser = userAns === optNum;
+                                            const isTheRightAnswer = q.answer === optNum;
+
+                                            let style = "bg-slate-50 border-slate-200 text-slate-600";
+                                            if (isTheRightAnswer) {
+                                                style = "bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold";
+                                            } else if (isSelectedByUser && !isCorrect) {
+                                                style = "bg-red-50 border-red-300 text-red-800 line-through";
+                                            }
+
+                                            return `
+                                                <div class="p-3 rounded-lg border text-sm flex items-center justify-between ${style}">
+                                                    <span>${opt}</span>
+                                                    <div class="flex items-center gap-1 text-xs">
+                                                        ${isSelectedByUser ? '<span class="bg-slate-700 text-white px-2 py-0.5 rounded text-[10px]">내 선택</span>' : ''}
+                                                        ${isTheRightAnswer ? '<span class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px]">정답</span>' : ''}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+
+                                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg text-sm text-slate-700 space-y-1">
+                                        <div class="font-bold text-blue-800 flex items-center gap-1.5">
+                                            <i data-lucide="book-open-check" class="w-4 h-4"></i> 정답 해설
+                                        </div>
+                                        <p class="leading-relaxed text-slate-600">${q.explanation}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </main>
+                </div>
+            `;
+        }
+
+        function toggleIncorrectFilter() {
+            state.filterIncorrectOnly = !state.filterIncorrectOnly;
+            render();
+        }
+
+        window.onload = function() {
+            init();
+        };
+    </script>
+</body>
+</html>
